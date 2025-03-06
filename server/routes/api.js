@@ -21,7 +21,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         const chunks = await processDocument(req.file);
         // console.log(chunks[2])
         
-        // 
+        //
         await companyVectorStore.addDocuments(chunks);
 
         res.json({

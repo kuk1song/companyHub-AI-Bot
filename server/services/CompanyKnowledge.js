@@ -1,36 +1,50 @@
-import geminiEmbedding from '../utils/GeminiEmbedding.js';
 import companyVectorStore from './CompanyVectorStore.js';
-import { ANSWER_TEMPLATE } from '../utils/promptTemplates.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ANSWER_TEMPLATE, SUMMARY_TEMPLATE } from '../utils/promptTemplates.js';
+
 
 class CompanyKnowledge {
+    constructor() {
+        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    }
+
     async answerQuestion(question) {
         try {
-            console.log('Processing question:', question);
-
-            // 获取相关文档
-            const { documents, metadatas } = await companyVectorStore.queryDocuments(question);
+            // 1. 获取相关文档
+            const relevantDocs = await companyVectorStore.queryDocuments(question);
             
-            // 构建上下文
-            const context = documents.join('\n\n');
-            
-            // 生成提示词
+            // 2. 使用模板构建提示词
+            const context = relevantDocs.join('\n\n');
             const prompt = ANSWER_TEMPLATE
                 .replace('{context}', context)
                 .replace('{question}', question);
 
-            // 生成答案
-            const answer = await geminiEmbedding.generateContent(prompt);
+            console.log('Generated prompt:', prompt);  // 调试用
 
-            return {
-                answer,
-                sources: metadatas.map(meta => ({
-                    fileName: meta.fileName,
-                    fileType: meta.fileType,
-                    processedAt: meta.processedAt
-                }))
-            };
+            // 3. 生成回答
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            return response.text();
         } catch (error) {
             console.error('Error answering question:', error);
+            throw error;
+        }
+    }
+
+    // 添加文档摘要方法
+    async summarizeDocument(content) {
+        try {
+            // 使用 SUMMARY_TEMPLATE 生成摘要
+            const prompt = SUMMARY_TEMPLATE.replace('{content}', content);
+            
+            console.log('Generating document summary...');
+            
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            return response.text();
+        } catch (error) {
+            console.error('Error generating summary:', error);
             throw error;
         }
     }

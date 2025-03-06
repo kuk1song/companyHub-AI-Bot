@@ -113,23 +113,26 @@ export class CompanyVectorStore {
         }
     }
 
-    async queryDocuments(question, limit = 5) {
+    async queryDocuments(query, k = 5) {
         try {
-            const queryEmbedding = await this.embedFunction.generate(question);
+            if (!this.collection) {
+                await this.initializeCollection();
+            }
+
+            console.log('Processing query:', query);
             
+            // 生成查询的向量表示
+            const [queryEmbedding] = await this.embedder.generate(query);
+            
+            // 在向量数据库中搜索相似文档
             const results = await this.collection.query({
-                queryEmbeddings: queryEmbedding,
-                nResults: limit,
-                include: ["documents", "metadatas", "distances"]
+                queryEmbeddings: [queryEmbedding],
+                nResults: k
             });
 
-            return {
-                documents: results.documents[0],
-                metadatas: results.metadatas[0],
-                distances: results.distances[0]
-            };
+            return results.documents[0];  // 返回最相似的文档
         } catch (error) {
-            console.error('Error querying documents:', error);
+            console.error('Error in queryDocuments:', error);
             throw error;
         }
     }
