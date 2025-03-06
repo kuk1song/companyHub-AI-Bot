@@ -22,46 +22,20 @@ const FileUpload = () => {
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        if (!file) {
-            setError('Please select a file');
-            return;
-        }
-
-        if (file.type !== 'application/pdf') {
-            setError('Only PDF files are supported');
-            return;
-        }
+        if (!file) return;
 
         const formData = new FormData();
         formData.append('file', file);
-        
-        setLoading(true);
-        setError(null);
-        setSuccess(null);
 
         try {
-            console.log('Starting upload for:', file.name);
-            
             const response = await fetch('http://localhost:3000/api/upload', {
                 method: 'POST',
-                body: formData,
+                body: formData
             });
-
-            console.log('Upload response status:', response.status);
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            setSuccess('File uploaded and processed successfully!');
-            console.log('Server response:', data);
+            const result = await response.json();
+            console.log('Upload result:', result);
         } catch (error) {
             console.error('Upload error:', error);
-            setError(error.message);
-        } finally {
-            setLoading(false);
         }
     };
 

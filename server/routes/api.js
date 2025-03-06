@@ -1,8 +1,8 @@
 import express from 'express';
 import multer from 'multer';
+import { processDocument } from '../utils/documentParser.js';
 import companyVectorStore from '../services/CompanyVectorStore.js';
 import companyKnowledge from '../services/CompanyKnowledge.js';
-import { processDocument } from '../services/CompanyVectorStore.js';
 
 const router = express.Router();
 const upload = multer({ 
@@ -21,7 +21,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         const chunks = await processDocument(req.file);
         
         // 存储到向量数据库
-        await companyVectorStore.storeDocument(chunks);
+        await companyVectorStore.addDocuments(chunks);
 
         res.json({
             success: true,
@@ -32,6 +32,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('Upload error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -50,12 +51,23 @@ router.post('/query', async (req, res) => {
 // 获取统计信息
 router.get('/stats', async (req, res) => {
     try {
+        console.log('Stats endpoint hit');  // 调试日志
         const stats = await companyVectorStore.getStats();
+        console.log('Retrieved stats:', stats);  // 调试日志
         res.json(stats);
     } catch (error) {
         console.error('Stats error:', error);
         res.status(500).json({ error: error.message });
     }
+});
+
+// 添加一个简单的测试端点
+router.get('/test', (req, res) => {
+    res.json({
+        status: 'ok',
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
 export default router;

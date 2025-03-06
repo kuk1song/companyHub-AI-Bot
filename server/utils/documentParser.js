@@ -1,10 +1,13 @@
 // import pdf from 'pdf-parse';
 // import mammoth from 'mammoth';
 import { marked } from 'marked';
-import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { ChromaClient } from 'chromadb';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 export async function parseDocument(file) {
     if (!file || !file.buffer) {
@@ -79,22 +82,50 @@ export async function parseDocument(file) {
 
 // 完整的解析方案
 export async function processDocument(file) {
-    // 1. 使用 LangChain 加载 PDF
-    const loader = new PDFLoader(file, {
-        splitPages: true,
-        parsedItemSeparator: '\n'
-    });
-    
-    // 2. 使用 LangChain 的文本分割器
-    const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 200,
-        separators: ["\n\n", "\n", ".", "!", "?"]
-    });
+    if (!file || !file.buffer) {
+        throw new Error('Invalid file input');
+    }
 
-    // 3. 处理文档
-    const docs = await loader.load();
-    const chunks = await splitter.splitDocuments(docs);
+    try {
+        // 1. 保存临时文件（PDFLoader 需要文件路径）
+        const tempFilePath = join(tmpdir(), `temp_${Date.now()}.pdf`);
+        await writeFile(tempFilePath, file.buffer);
+        
+        console.log('Processing document:', file.originalname);
+        console.log('Temp file created at:', tempFilePath);
 
-    return chunks;
+        // 2. 使用 PDFLoader 加载文档
+        const loader = new PDFLoader(tempFilePath, {
+            splitPages: true
+        });
+
+        // 3. 加载文档
+        const docs = await loader.load();
+        console.log(`Loaded ${docs.length} pages`);
+
+        // 4. 设置文本分割器
+        const textSplitter = new RecursiveCharacterTextSplitter({
+            chunkSize: 1000,
+            chunkOverlap: 200,
+            separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""]
+        });
+
+        // 5. 分割文档
+        const chunks = await textSplitter.splitDocuments(docs);
+        console.log(`Split into ${chunks.length} chunks`);
+
+        // 6. 返回处理后的文档块
+        return chunks.map(chunk => ({
+            text: chunk.pageContent,
+            metadata: {
+                ...chunk.metadata,
+                fileName: file.originalname,
+                processedAt: new Date().toISOString()
+            }
+        }));
+
+    } catch (error) {
+        console.error('Document processing error:', error);
+        throw new Error(`Failed to process document: ${error.message}`);
+    }
 }

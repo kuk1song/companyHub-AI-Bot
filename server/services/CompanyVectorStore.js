@@ -3,36 +3,53 @@ import geminiEmbedding from '../utils/GeminiEmbedding.js';
 import { parseDocument } from '../utils/documentParser.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-class CompanyVectorStore {
+export class CompanyVectorStore {
     constructor() {
         this.DB_NAME = "company_knowledge_db";
         this.embedFunction = geminiEmbedding;
-        this.client = new ChromaClient({
-            path: "http://localhost:8000"
-        });
-        this.embedder = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        this.initializeDB();
-    }
-
-    async initializeDB() {
         try {
-            try {
-                this.collection = await this.client.getCollection({
-                    name: this.DB_NAME,
-                    embeddingFunction: this.embedFunction
-                });
-                console.log('Using existing collection');
-            } catch (error) {
-                this.collection = await this.client.createCollection({
-                    name: this.DB_NAME,
-                    embeddingFunction: this.embedFunction
-                });
-                console.log('Created new collection');
-            }
+            this.client = new ChromaClient({
+                path: "http://localhost:8000"
+            });
+            console.log('ChromaDB client initialized');
         } catch (error) {
-            console.error('Database initialization error:', error);
+            console.error('ChromaDB client initialization error:', error);
             throw error;
         }
+        this.initializeCollection();
+        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+
+    async initializeCollection() {
+        try {
+            this.collection = await this.client.getOrCreateCollection({
+                name: "company_docs",
+                metadata: {
+                    "description": "Company documents collection"
+                }
+            });
+            console.log('Collection initialized successfully');
+        } catch (error) {
+            console.error('Collection initialization error:', error);
+            throw error;
+        }
+    }
+
+    async addDocuments(documents) {
+        const embeddings = await this.generateEmbeddings(documents);
+        await this.collection.add({
+            ids: documents.map((_, i) => `doc_${Date.now()}_${i}`),
+            embeddings,
+            documents: documents.map(doc => doc.pageContent)
+        });
+    }
+
+    async similaritySearch(query) {
+        const queryEmbedding = await this.generateEmbedding(query);
+        return await this.collection.query({
+            queryEmbeddings: [queryEmbedding],
+            nResults: 5
+        });
     }
 
     async storeDocument(file) {
@@ -42,7 +59,7 @@ class CompanyVectorStore {
             
             // 生成嵌入并存储
             const embeddings = await Promise.all(
-                chunks.map(chunk => this.embedder.embedContent(chunk.text))
+                chunks.map(chunk => this.genAI.embedContent(chunk.text))
             );
 
             await this.collection.add({
@@ -81,24 +98,27 @@ class CompanyVectorStore {
 
     async getStats() {
         try {
-            const result = await this.collection.get();
-            const documentTypes = {};
-            
-            result.metadatas.forEach(meta => {
-                const type = meta.fileType;
-                documentTypes[type] = (documentTypes[type] || 0) + 1;
-            });
-
+            if (!this.collection) {
+                await this.initializeCollection();
+            }
+            const count = await this.collection.count();
             return {
-                totalDocuments: result.ids.length,
-                documentTypes,
-                lastUpdated: new Date().toISOString()
+                documentCount: count || 0,
+                lastUpdated: new Date().toISOString(),
+                status: 'active'
             };
         } catch (error) {
             console.error('Error getting stats:', error);
-            throw error;
+            return {
+                documentCount: 0,
+                lastUpdated: null,
+                status: 'error',
+                error: error.message
+            };
         }
     }
 }
 
-export default new CompanyVectorStore();
+// 创建单例实例
+const companyVectorStore = new CompanyVectorStore();
+export default companyVectorStore;
