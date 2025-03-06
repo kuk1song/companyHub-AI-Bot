@@ -6,12 +6,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export class CompanyVectorStore {
     constructor() {
         this.DB_NAME = "company_knowledge_db";
-        this.embedFunction = geminiEmbedding;
         try {
             this.client = new ChromaClient({
                 path: "http://localhost:8000"
             });
-            console.log('ChromaDB client initialized');
+            this.embedder = new geminiEmbedding();
+            console.log('ChromaDB and Embedding service initialized');
         } catch (error) {
             console.error('ChromaDB client initialization error:', error);
             throw error;
@@ -35,13 +35,51 @@ export class CompanyVectorStore {
         }
     }
 
-    async addDocuments(documents) {
-        const embeddings = await this.generateEmbeddings(documents);
-        await this.collection.add({
-            ids: documents.map((_, i) => `doc_${Date.now()}_${i}`),
-            embeddings,
-            documents: documents.map(doc => doc.pageContent)
-        });
+    async addDocuments(documents) {  // 注意是复数，表示处理多个文档
+        try {
+            if (!this.collection) {
+                await this.initializeCollection();
+            }
+
+            // 验证文档
+            const validDocuments = documents.filter(doc => {
+                const isValid = doc && doc.text && doc.text.trim().length > 0;
+                if (!isValid) {
+                    console.log('Invalid document:', {
+                        hasDoc: !!doc,
+                        hasText: doc && !!doc.text,
+                        textLength: doc && doc.text ? doc.text.trim().length : 0
+                    });
+                }
+                return isValid;
+            });
+    
+            console.log(`Valid documents: ${validDocuments.length} out of ${documents.length}`);
+    
+            if (validDocuments.length === 0) {
+                throw new Error('No valid documents to process');
+            }
+    
+            // 从文档中提取文本
+            const texts = validDocuments.map(doc => doc.text.trim());
+            console.log('Texts prepared for embedding:', texts.length);
+            
+            // 使用批量处理方法
+            const embeddings = await this.embedder.generate(texts);  // 使用 generate 而不是 generateEmbedding
+            
+            // Store to vector database
+            await this.collection.add({
+                ids: validDocuments.map((_, i) => `doc_${Date.now()}_${i}`),
+                embeddings,
+                metadatas: validDocuments.map(doc => doc.metadata || {}),
+                documents: texts
+            });
+            
+            return true;
+        } catch (error) {
+            console.error('Error in addDocuments:', error);
+            throw error;
+        }
     }
 
     async similaritySearch(query) {

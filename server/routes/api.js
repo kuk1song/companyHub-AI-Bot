@@ -10,17 +10,18 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// 上传文档
+// Upload document
 router.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file provided' });
         }
 
-        // 处理文档
+        // Process document
         const chunks = await processDocument(req.file);
+        // console.log(chunks[2])
         
-        // 存储到向量数据库
+        // 
         await companyVectorStore.addDocuments(chunks);
 
         res.json({

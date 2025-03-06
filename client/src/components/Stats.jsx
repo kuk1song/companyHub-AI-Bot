@@ -53,6 +53,7 @@ const Stats = () => {
             <div className="stats-content">
                 <p>Total Documents: {stats.documentCount || 0}</p>
                 <p>Last Updated: {stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'Never'}</p>
+                <p>Status: {stats.status}</p>
             </div>
         </div>
     );

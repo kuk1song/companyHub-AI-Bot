@@ -114,6 +114,17 @@ export async function processDocument(file) {
         const chunks = await textSplitter.splitDocuments(docs);
         console.log(`Split into ${chunks.length} chunks`);
 
+        // 验证每个文档块
+        const validChunks = chunks.filter(chunk => {
+            if (!chunk.pageContent || chunk.pageContent.trim() === '') {
+                console.log('Found empty chunk, skipping...');
+                return false;
+            }
+            return true;
+        });
+
+        console.log(`Original chunks: ${chunks.length}, Valid chunks: ${validChunks.length}`);
+
         // 6. 返回处理后的文档块
         return chunks.map(chunk => ({
             text: chunk.pageContent,
