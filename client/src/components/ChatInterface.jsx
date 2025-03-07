@@ -63,6 +63,57 @@ const ChatInterface = () => {
         }
     };
 
+    const handleClearData = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const response = await fetch(`${API_URL}/api/clear-data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP error! status: ${response.status}`);
+            }
+
+            if (data.success) {
+                setMessages([]);
+                alert(`${data.message} (${data.details?.deletedCount || 0} documents deleted)`);
+            } else {
+                throw new Error(data.message || 'Failed to clear data');
+            }
+        } catch (error) {
+            console.error('Error clearing data:', error);
+            alert(`Failed to clear data: ${error.message}`);
+        }
+    };
+
+    const handleFileUpload = async (file) => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_URL}/api/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Upload failed');
+            }
+
+            const data = await response.json();
+            alert('File uploaded successfully');
+        } catch (error) {
+            alert('Upload failed: ' + error.message);
+        }
+    };
+
     return (
         <div className="chat-interface">
             <div className="chat-messages">
@@ -104,6 +155,9 @@ const ChatInterface = () => {
                     Send
                 </Button>
             </div>
+            <button onClick={handleClearData} className="clear-data-btn">
+                Clear All Data
+            </button>
         </div>
     );
 };

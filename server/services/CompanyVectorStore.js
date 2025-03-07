@@ -18,6 +18,7 @@ export class CompanyVectorStore {
         }
         this.initializeCollection();
         this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        this.uploadedFiles = new Set();
     }
 
     async initializeCollection() {
@@ -35,7 +36,7 @@ export class CompanyVectorStore {
         }
     }
 
-    async addDocuments(documents) {  // 注意是复数，表示处理多个文档
+    async addDocuments(documents) {
         try {
             if (!this.collection) {
                 await this.initializeCollection();
@@ -45,37 +46,33 @@ export class CompanyVectorStore {
             const validDocuments = documents.filter(doc => {
                 const isValid = doc && doc.text && doc.text.trim().length > 0;
                 if (!isValid) {
-                    console.log('Invalid document:', {
-                        hasDoc: !!doc,
-                        hasText: doc && !!doc.text,
-                        textLength: doc && doc.text ? doc.text.trim().length : 0
-                    });
+                    console.log('Invalid document:', doc);
                 }
                 return isValid;
             });
-    
-            console.log(`Valid documents: ${validDocuments.length} out of ${documents.length}`);
-    
+
             if (validDocuments.length === 0) {
                 throw new Error('No valid documents to process');
             }
-    
+
             // 从文档中提取文本
             const texts = validDocuments.map(doc => doc.text.trim());
-            console.log('Texts prepared for embedding:', texts.length);
             
-            // 使用批量处理方法
-            const embeddings = await this.embedder.generate(texts);  // 使用 generate 而不是 generateEmbedding
+            // 生成嵌入
+            const embeddings = await this.embedder.generate(texts);
             
-            // Store to vector database
+            // 存储到向量数据库
             await this.collection.add({
                 ids: validDocuments.map((_, i) => `doc_${Date.now()}_${i}`),
                 embeddings,
                 metadatas: validDocuments.map(doc => doc.metadata || {}),
                 documents: texts
             });
-            
-            return true;
+
+            return {
+                success: true,
+                count: validDocuments.length
+            };
         } catch (error) {
             console.error('Error in addDocuments:', error);
             throw error;
@@ -157,6 +154,53 @@ export class CompanyVectorStore {
                 error: error.message
             };
         }
+    }
+
+    async clearAllData() {
+        try {
+            console.log('Starting clearAllData...');
+            if (!this.collection) {
+                console.log('Initializing collection...');
+                await this.initializeCollection();
+            }
+
+            console.log('Getting collection data...');
+            const collectionData = await this.collection.get();
+            console.log('Collection data:', collectionData);
+
+            const ids = collectionData.ids;
+            console.log('Found IDs:', ids);
+
+            if (ids && ids.length > 0) {
+                console.log('Deleting documents...');
+                await this.collection.delete({
+                    ids: ids
+                });
+                console.log('Documents deleted successfully');
+            } else {
+                console.log('No documents to delete');
+            }
+
+            this.uploadedFiles = new Set();
+            console.log('File records cleared');
+
+            return {
+                success: true,
+                message: 'All data cleared successfully',
+                deletedCount: ids ? ids.length : 0
+            };
+        } catch (error) {
+            console.error('Error in clearAllData:', error);
+            throw new Error(`Failed to clear data: ${error.message}`);
+        }
+    }
+
+    isFileUploaded(fileName) {
+        return this.uploadedFiles.has(fileName);
+    }
+
+    recordFileUpload(fileName) {
+        this.uploadedFiles.add(fileName);
     }
 }
 

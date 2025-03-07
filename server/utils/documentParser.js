@@ -5,11 +5,11 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { ChromaClient } from 'chromadb';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { writeFile } from 'fs/promises';
+import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-export async function parseDocument(file) {
+export const parseDocument = async (file) => {
     if (!file || !file.buffer) {
         throw new Error('Invalid file input');
     }
@@ -26,23 +26,25 @@ export async function parseDocument(file) {
         switch (type) {
             case 'application/pdf':
                 try {
-                    // 打印调试信息
-                    console.log('Starting PDF parse...');
+                    // 创建临时文件
+                    const tempFilePath = join(tmpdir(), `temp_${Date.now()}.pdf`);
+                    await writeFile(tempFilePath, buffer);
+                    console.log('Temp PDF file created at:', tempFilePath);
+
+                    // 使用 PDFLoader 加载文档
+                    const loader = new PDFLoader(tempFilePath);
+                    const docs = await loader.load();
                     
-                    // 动态导入 pdf-parse
-                    const pdfParse = await import('pdf-parse');
+                    // 合并所有页面的内容
+                    content = docs.map(doc => doc.pageContent).join('\n');
                     
-                    // 确保使用 .default
-                    const pdfData = await pdfParse.default(buffer);
-                    
-                    console.log('PDF parsed successfully');
-                    
-                    content = pdfData.text;
+                    // 清理临时文件
+                    await unlink(tempFilePath);
+                    console.log('Temp PDF file deleted');
+
                     metadata = {
                         ...metadata,
-                        pageCount: pdfData.numpages,
-                        author: pdfData.info?.Author,
-                        creationDate: pdfData.info?.CreationDate
+                        pageCount: docs.length
                     };
                 } catch (pdfError) {
                     console.error('PDF parsing error:', pdfError);
@@ -57,7 +59,7 @@ export async function parseDocument(file) {
 
             case 'text/markdown':
             case 'text/plain':
-                content = buffer.toString();
+                content = buffer.toString('utf-8');
                 break;
 
             default:
@@ -68,9 +70,9 @@ export async function parseDocument(file) {
             throw new Error('No content extracted from file');
         }
 
+        // 清理文本内容
         content = content
             .replace(/\s+/g, ' ')
-            .replace(/[^\w\s.,?!-]/g, '')
             .trim();
 
         return { content, metadata };
@@ -78,7 +80,7 @@ export async function parseDocument(file) {
         console.error('Document parsing error:', error);
         throw new Error(`Failed to parse document: ${error.message}`);
     }
-}
+};
 
 // 完整的解析方案
 export async function processDocument(file) {
@@ -140,3 +142,20 @@ export async function processDocument(file) {
         throw new Error(`Failed to process document: ${error.message}`);
     }
 }
+
+export const splitIntoChunks = async (text) => {
+    try {
+        const splitter = new RecursiveCharacterTextSplitter({
+            chunkSize: 1000,
+            chunkOverlap: 200,
+            separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""]
+        });
+
+        const chunks = await splitter.createDocuments([text]);
+        
+        return chunks.map(chunk => chunk.pageContent);
+    } catch (error) {
+        console.error('Error splitting text into chunks:', error);
+        throw new Error(`Failed to split text: ${error.message}`);
+    }
+};

@@ -6,7 +6,7 @@ import companyVectorStore from './services/CompanyVectorStore.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS 配置
+// Enable CORS for development
 app.use(cors());
 
 // Body parser
@@ -20,10 +20,13 @@ app.get('/test', (req, res) => {
 // 确保 API 路由正确挂载
 app.use('/api', apiRoutes);
 
-// 添加基本的错误处理
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({ error: err.message });
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        error: err.message || 'Internal Server Error'
+    });
 });
 
 // 启动服务器

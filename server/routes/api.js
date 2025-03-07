@@ -14,27 +14,27 @@ const upload = multer({
 router.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ error: 'No file provided' });
+            return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        // Process document
-        const chunks = await processDocument(req.file);
-        // console.log(chunks[2])
-        
-        //
-        await companyVectorStore.addDocuments(chunks);
-
-        res.json({
-            success: true,
-            chunks: chunks.length,
-            metadata: {
-                fileName: req.file.originalname,
-                processedAt: new Date().toISOString()
-            }
+        console.log('File received:', {
+            name: req.file.originalname,
+            type: req.file.mimetype,
+            size: req.file.size
         });
+
+        const result = await companyKnowledge.processDocument(req.file);
+        res.json(result);
     } catch (error) {
         console.error('Upload error:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            error: error.message,
+            details: error.stack,
+            file: req.file ? {
+                name: req.file.originalname,
+                type: req.file.mimetype
+            } : 'No file'
+        });
     }
 });
 
@@ -79,6 +79,24 @@ router.post('/question', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Add clear data endpoint
+router.post('/clear-data', async (req, res) => {
+    try {
+        const result = await companyKnowledge.clearAllData();
+        res.json({
+            success: true,
+            message: 'All data cleared successfully',
+            details: result
+        });
+    } catch (error) {
+        console.error('Error in /clear-data:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to clear data'
+        });
     }
 });
 
