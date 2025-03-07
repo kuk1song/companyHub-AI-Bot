@@ -7,11 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CORS 配置
-app.use(cors({
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Accept'],
-}));
+app.use(cors());
 
 // Body parser
 app.use(express.json());

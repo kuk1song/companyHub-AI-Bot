@@ -1,77 +1,108 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { Input, Button, List, Typography, Spin } from 'antd';
+import { SendOutlined } from '@ant-design/icons';
+import './ChatInterface.css';
+
+const { Text } = Typography;
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([]);
-    const [input, setInput] = useState('');
+    const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const sendMessage = async () => {
-        if (!input.trim()) return;
+    const handleSend = async () => {
+        if (!inputValue.trim()) return;
+
+        const userMessage = inputValue.trim();
+        setInputValue('');
+        setLoading(true);
+
+        // 添加用户消息
+        setMessages(prev => [...prev, { 
+            type: 'user', 
+            content: userMessage 
+        }]);
 
         try {
-            setLoading(true);
-            setMessages(prev => [...prev, { type: 'user', content: input }]);
-
-            const response = await fetch('http://localhost:3000/api/query', {
+            // 使用正确的 API URL（根据你的 VITE_API_URL 环境变量）
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const response = await fetch(`${API_URL}/api/question`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: input })
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: userMessage })
             });
 
-            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
             
-            setMessages(prev => [...prev, {
-                type: 'bot',
-                content: result.answer,
-                sources: result.sources
+            // 添加 AI 回答
+            setMessages(prev => [...prev, { 
+                type: 'assistant', 
+                content: data.answer || 'Sorry, I could not process your question.' 
             }]);
-            
-            setInput('');
         } catch (error) {
-            console.error('Query error:', error);
-            setMessages(prev => [...prev, {
-                type: 'error',
-                content: 'Sorry, something went wrong.'
+            console.error('Error:', error);
+            setMessages(prev => [...prev, { 
+                type: 'assistant', 
+                content: 'Sorry, an error occurred. Please try again.' 
             }]);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
     return (
-        <div className="chat-container">
-            {/* <h2>Ask About Company Knowledge</h2> */}
-            <div className="messages">
-                {messages.map((msg, idx) => (
-                    <div key={idx} className={`message ${msg.type}`}>
-                        <p>{msg.content}</p>
-                        {msg.sources && (
-                            <div className="sources">
-                                <small>Sources:</small>
-                                <ul>
-                                    {msg.sources.map((source, i) => (
-                                        <li key={i}>{source.fileName}</li>
-                                    ))}
-                                </ul>
+        <div className="chat-interface">
+            <div className="chat-messages">
+                <List
+                    dataSource={messages}
+                    renderItem={(message, index) => (
+                        <List.Item className={`message ${message.type}`}>
+                            <div className="message-header">
+                                {message.type === 'assistant' ? 'Luluu:' : 'You:'}
                             </div>
-                        )}
+                            <div className="message-content">
+                                <Text>{message.content}</Text>
+                            </div>
+                        </List.Item>
+                    )}
+                />
+                {loading && (
+                    <div className="loading-indicator">
+                        <Spin />
+                        <div style={{ marginTop: 8 }}>Luluu is thinking...</div>
                     </div>
-                ))}
+                )}
             </div>
-            <div className="input-area">
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            <div className="chat-input">
+                <Input.TextArea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     placeholder="Ask a question..."
+                    autoSize={{ minRows: 1, maxRows: 4 }}
                     disabled={loading}
                 />
-                <button 
-                    onClick={sendMessage}
-                    disabled={loading || !input.trim()}
+                <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    onClick={handleSend}
+                    disabled={!inputValue.trim() || loading}
                 >
-                    {loading ? 'Thinking...' : 'Send'}
-                </button>
+                    Send
+                </Button>
             </div>
         </div>
     );

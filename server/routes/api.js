@@ -71,4 +71,15 @@ router.get('/test', (req, res) => {
     });
 });
 
+router.post('/question', async (req, res) => {
+    try {
+        const { question } = req.body;
+        const answer = await companyKnowledge.answerQuestion(question);
+        res.json({ answer });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

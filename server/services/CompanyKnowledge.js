@@ -20,15 +20,12 @@ class CompanyKnowledge {
                 .replace('{context}', context)
                 .replace('{question}', question);
 
-            console.log('Generated prompt:', prompt);  // 调试用
+            const completion = await this.model.generateContent(prompt);
 
-            // 3. 生成回答
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            return response.text();
+            return completion.response.text();
         } catch (error) {
-            console.error('Error answering question:', error);
-            throw error;
+            console.error('Error in answerQuestion:', error);
+            return "I apologize, but I encountered an error while processing your question. Please try again.";
         }
     }
 
