@@ -14,7 +14,6 @@ An intelligent enterprise knowledge base system powered by Google Gemini AI, pro
 ### Frontend
 - React
 - Vite
-- CSS Modules
 
 ### Backend
 - Node.js
