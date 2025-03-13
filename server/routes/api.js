@@ -10,6 +10,7 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+
 // Upload document
 router.post('/upload', upload.single('file'), async (req, res) => {
     try {
@@ -38,7 +39,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }
 });
 
-// 查询知识
+
 router.post('/query', async (req, res) => {
     try {
         const { question } = req.body;
@@ -49,12 +50,13 @@ router.post('/query', async (req, res) => {
     }
 });
 
-// 获取统计信息
+
+// Get statistics info
 router.get('/stats', async (req, res) => {
     try {
-        console.log('Stats endpoint hit');  // 调试日志
+        console.log('Stats endpoint hit');  
         const stats = await companyVectorStore.getStats();
-        console.log('Retrieved stats:', stats);  // 调试日志
+        console.log('Retrieved stats:', stats);  
         res.json(stats);
     } catch (error) {
         console.error('Stats error:', error);
@@ -62,7 +64,7 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-// 添加一个简单的测试端点
+
 router.get('/test', (req, res) => {
     res.json({
         status: 'ok',
@@ -71,6 +73,7 @@ router.get('/test', (req, res) => {
     });
 });
 
+// Answer question
 router.post('/question', async (req, res) => {
     try {
         const { question } = req.body;
@@ -82,7 +85,8 @@ router.post('/question', async (req, res) => {
     }
 });
 
-// Add clear data endpoint
+
+// Clear all data
 router.post('/clear-data', async (req, res) => {
     try {
         const result = await companyKnowledge.clearAllData();
@@ -99,5 +103,6 @@ router.post('/clear-data', async (req, res) => {
         });
     }
 });
+
 
 export default router;

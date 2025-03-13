@@ -15,10 +15,10 @@ class CompanyKnowledge {
 
     async answerQuestion(question) {
         try {
-            // 1. 获取相关文档
+            // 1. Get relevant documents
             const relevantDocs = await companyVectorStore.queryDocuments(question);
             
-            // 2. 使用模板构建提示词
+            // 2. Use template to build prompt
             const context = relevantDocs.join('\n\n');
             const prompt = ANSWER_TEMPLATE
                 .replace('{context}', context)
@@ -33,10 +33,10 @@ class CompanyKnowledge {
         }
     }
 
-    // 添加文档摘要方法
+    // Add document summary method
     async summarizeDocument(content) {
         try {
-            // 使用 SUMMARY_TEMPLATE 生成摘要
+            // Use SUMMARY_TEMPLATE to generate summary
             const prompt = SUMMARY_TEMPLATE.replace('{content}', content);
             
             console.log('Generating document summary...');

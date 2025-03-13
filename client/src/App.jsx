@@ -6,7 +6,7 @@ import './App.css';
 function App() {
     return (
         <div className="container">
-            <h1>Luluu Knowledge Hub</h1>
+            <h1>Company Knowledge Hub</h1>
             <FileUpload />
             <Stats />
             <ChatInterface />

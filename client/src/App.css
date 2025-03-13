@@ -1,26 +1,25 @@
-/* Apple-style 配色方案 */
 :root {
-  /* 主色调 */
-  --primary-color: #007AFF;     /* 苹果蓝 */
-  --secondary-color: #5856D6;   /* 紫色 */
+  /* Primary color */
+  --primary-color: #007AFF;     
+  --secondary-color: #5856D6;  
   
-  /* 中性色 */
-  --bg-primary: #FFFFFF;        /* 纯白背景 */
-  --bg-secondary: #F5F5F7;      /* 浅灰背景 */
-  --bg-tertiary: #FAFAFA;       /* 次要背景 */
+  /* Neutral colors */
+  --bg-primary: #FFFFFF;        
+  --bg-secondary: #F5F5F7;      
+  --bg-tertiary: #FAFAFA;       
   
-  /* 文字颜色 */
-  --text-primary: #1D1D1F;      /* 近黑色 */
-  --text-secondary: #86868B;    /* 中灰色 */
-  --text-tertiary: #6E6E73;     /* 浅灰色 */
+  /* Text colors */
+  --text-primary: #1D1D1F;      
+  --text-secondary: #86868B;    
+  --text-tertiary: #6E6E73;     
   
-  /* 边框和阴影 */
-  --border-color: #D2D2D7;      /* 苹果灰 */
+  /* Border and shadow */
+  --border-color: #D2D2D7;      
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* 基础样式 */
+/* Basic styles */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
   line-height: 1.5;
@@ -29,7 +28,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 布局容器 */
+/* Layout container */
 .container {
   max-width: 1000px;
   margin: 0 auto;
@@ -37,7 +36,7 @@ body {
   background: var(--bg-primary);
 }
 
-/* 卡片样式 */
+/* Card styles */
 .card {
   background: var(--bg-primary);
   border-radius: 12px;
@@ -50,7 +49,7 @@ body {
   box-shadow: var(--shadow-md);
 }
 
-/* 按钮样式 */
+/* Button styles */
 .button {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -75,7 +74,7 @@ body {
   color: var(--text-primary);
 }
 
-/* 表单样式 */
+/* Form styles */
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -92,7 +91,7 @@ body {
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
-/* 排版样式 */
+/* Typography styles */
 h1, h2, h3 {
   color: var(--text-primary);
   font-weight: 600;
@@ -103,12 +102,12 @@ h1 { font-size: 2.5rem; }
 h2 { font-size: 2rem; }
 h3 { font-size: 1.5rem; }
 
-/* 文本样式 */
+/* Text styles */
 .text-secondary {
   color: var(--text-secondary);
 }
 
-/* 动画效果 - 更柔和 */
+/* Animation effects - softer */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -118,14 +117,14 @@ h3 { font-size: 1.5rem; }
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* 分割线 */
+/* Divider */
 .divider {
   height: 1px;
   background: var(--border-color);
   margin: 1.5rem 0;
 }
 
-/* 滚动条 - 极简风格 */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }

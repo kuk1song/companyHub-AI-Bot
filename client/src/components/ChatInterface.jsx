@@ -17,14 +17,13 @@ const ChatInterface = () => {
         setInputValue('');
         setLoading(true);
 
-        // 添加用户消息
+        // Add user message
         setMessages(prev => [...prev, { 
             type: 'user', 
             content: userMessage 
         }]);
 
         try {
-            // 使用正确的 API URL（根据你的 VITE_API_URL 环境变量）
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
             const response = await fetch(`${API_URL}/api/question`, {
                 method: 'POST',
@@ -40,7 +39,7 @@ const ChatInterface = () => {
 
             const data = await response.json();
             
-            // 添加 AI 回答
+            // Add AI answer
             setMessages(prev => [...prev, { 
                 type: 'assistant', 
                 content: data.answer || 'Sorry, I could not process your question.' 
@@ -122,7 +121,7 @@ const ChatInterface = () => {
                     renderItem={(message, index) => (
                         <List.Item className={`message ${message.type}`}>
                             <div className="message-header">
-                                {message.type === 'assistant' ? 'Luluu:' : 'You:'}
+                                {message.type === 'assistant' ? 'AI:' : 'You:'}
                             </div>
                             <div className="message-content">
                                 <Text>{message.content}</Text>
@@ -133,7 +132,7 @@ const ChatInterface = () => {
                 {loading && (
                     <div className="loading-indicator">
                         <Spin />
-                        <div style={{ marginTop: 8 }}>Luluu is thinking...</div>
+                        <div style={{ marginTop: 8 }}>AI is thinking...</div>
                     </div>
                 )}
             </div>

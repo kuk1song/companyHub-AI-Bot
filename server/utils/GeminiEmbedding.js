@@ -15,7 +15,7 @@ class GeminiEmbedding {
         }
     }
 
-    async generateEmbedding(text) {  // 单个文本的 embedding 生成
+    async generateEmbedding(text) {  // Single text embedding generation
         try {
             const result = await this.model.embedContent(text);
             return result.embedding.values;
@@ -25,7 +25,7 @@ class GeminiEmbedding {
         }
     }
 
-    async generate(texts) {  // 批量文本的 embedding 生成
+    async generate(texts) {  // Batch text embedding generation
         try {
             console.log('Generating embeddings for', Array.isArray(texts) ? texts.length : 1, 'texts');
             

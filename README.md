@@ -126,16 +126,39 @@ graph TD
 ## 🚀 Quick Start
 
 1. **Install Dependencies** 
+```bash
+# Install server dependencies
+cd server
+npm install
+
+# Install client dependencies
+cd client
+npm install
 
 2. **Environment Setup**
-- Copy `.env.example` to `.env`
-- Configure necessary environment variables:
-  ```
-  GEMINI_API_KEY=your_api_key
-  VECTOR_STORE_PATH=./data/vector_store
-  ```
 
-3. **Launch Services** 
+Frontend (.env in client folder):
+```bash
+# client/.env
+VITE_API_URL=http://localhost:3000
+```
+
+Backend (.env in server folder):
+```bash
+# server/.env
+PORT=3000
+GEMINI_API_KEY=your_gemini_api_key
+VECTOR_STORE_PATH=./data/vector_store
+```
+
+3. **Start the Application**
+```bash
+# Start server (in server directory)
+npm run dev
+
+# Start client (in client directory)
+npm run dev
+```
 
 ## 📝 API Documentation
 

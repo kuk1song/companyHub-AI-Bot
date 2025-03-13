@@ -26,19 +26,19 @@ export const parseDocument = async (file) => {
         switch (type) {
             case 'application/pdf':
                 try {
-                    // 创建临时文件
+                    // Create temporary file
                     const tempFilePath = join(tmpdir(), `temp_${Date.now()}.pdf`);
                     await writeFile(tempFilePath, buffer);
                     console.log('Temp PDF file created at:', tempFilePath);
 
-                    // 使用 PDFLoader 加载文档
+                    // Use PDFLoader to load document
                     const loader = new PDFLoader(tempFilePath);
                     const docs = await loader.load();
                     
-                    // 合并所有页面的内容
+                    // Merge content from all pages
                     content = docs.map(doc => doc.pageContent).join('\n');
                     
-                    // 清理临时文件
+                    // Clean up temporary file
                     await unlink(tempFilePath);
                     console.log('Temp PDF file deleted');
 
@@ -70,7 +70,7 @@ export const parseDocument = async (file) => {
             throw new Error('No content extracted from file');
         }
 
-        // 清理文本内容
+        // Clean up text content
         content = content
             .replace(/\s+/g, ' ')
             .trim();
@@ -82,41 +82,41 @@ export const parseDocument = async (file) => {
     }
 };
 
-// 完整的解析方案
+// Complete parsing solution
 export async function processDocument(file) {
     if (!file || !file.buffer) {
         throw new Error('Invalid file input');
     }
 
     try {
-        // 1. 保存临时文件（PDFLoader 需要文件路径）
+        // 1. Save temporary file (PDFLoader needs file path)
         const tempFilePath = join(tmpdir(), `temp_${Date.now()}.pdf`);
         await writeFile(tempFilePath, file.buffer);
         
         console.log('Processing document:', file.originalname);
         console.log('Temp file created at:', tempFilePath);
 
-        // 2. 使用 PDFLoader 加载文档
+        // 2. Use PDFLoader to load document
         const loader = new PDFLoader(tempFilePath, {
             splitPages: true
         });
 
-        // 3. 加载文档
+        // 3. Load document
         const docs = await loader.load();
         console.log(`Loaded ${docs.length} pages`);
 
-        // 4. 设置文本分割器
+        // 4. Set text splitter
         const textSplitter = new RecursiveCharacterTextSplitter({
             chunkSize: 1000,
             chunkOverlap: 200,
             separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""]
         });
 
-        // 5. 分割文档
+        // 5. Split document
         const chunks = await textSplitter.splitDocuments(docs);
         console.log(`Split into ${chunks.length} chunks`);
 
-        // 验证每个文档块
+        // Validate each document chunk
         const validChunks = chunks.filter(chunk => {
             if (!chunk.pageContent || chunk.pageContent.trim() === '') {
                 console.log('Found empty chunk, skipping...');
@@ -127,7 +127,7 @@ export async function processDocument(file) {
 
         console.log(`Original chunks: ${chunks.length}, Valid chunks: ${validChunks.length}`);
 
-        // 6. 返回处理后的文档块
+        // 6. Return processed document chunks
         return chunks.map(chunk => ({
             text: chunk.pageContent,
             metadata: {

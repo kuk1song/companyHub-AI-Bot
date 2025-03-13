@@ -12,12 +12,12 @@ app.use(cors());
 // Body parser
 app.use(express.json());
 
-// 测试路由
+// Test route
 app.get('/test', (req, res) => {
     res.json({ status: 'Server is running' });
 });
 
-// 确保 API 路由正确挂载
+// Ensure API routes are mounted correctly
 app.use('/api', apiRoutes);
 
 // Error handling middleware
@@ -29,10 +29,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 启动服务器
+// Start server
 const startServer = async () => {
     try {
-        // 确保 ChromaDB 连接成功
+        // Ensure ChromaDB connection is successful
         await companyVectorStore.initializeCollection();
         
         app.listen(PORT, () => {

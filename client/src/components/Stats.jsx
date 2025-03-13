@@ -31,22 +31,22 @@ const Stats = () => {
         fetchStats();
     }, []);
 
-    // 处理加载状态
+    // Handle loading state
     if (loading) {
         return <div>Loading stats...</div>;
     }
 
-    // 处理空数据状态
+    // Handle empty data state
     if (!stats) {
         return <div>No documents processed yet.</div>;
     }
 
-    // 处理错误状态
+    // Handle error state
     if (error) {
         return <div className="error">Error: {error}</div>;
     }
 
-    // 显示统计信息
+    // Show stats info
     return (
         <div className="stats">
             <h2>Document Statistics</h2>

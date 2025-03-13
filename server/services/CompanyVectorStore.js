@@ -42,7 +42,7 @@ export class CompanyVectorStore {
                 await this.initializeCollection();
             }
 
-            // 验证文档
+            // Validate documents
             const validDocuments = documents.filter(doc => {
                 const isValid = doc && doc.text && doc.text.trim().length > 0;
                 if (!isValid) {
@@ -55,13 +55,13 @@ export class CompanyVectorStore {
                 throw new Error('No valid documents to process');
             }
 
-            // 从文档中提取文本
+            // Extract text from documents
             const texts = validDocuments.map(doc => doc.text.trim());
             
-            // 生成嵌入
+            // Generate embeddings
             const embeddings = await this.embedder.generate(texts);
             
-            // 存储到向量数据库
+            // Store to vector database
             await this.collection.add({
                 ids: validDocuments.map((_, i) => `doc_${Date.now()}_${i}`),
                 embeddings,
@@ -89,10 +89,10 @@ export class CompanyVectorStore {
 
     async storeDocument(file) {
         try {
-            // 使用 LangChain 处理文档
+            // Use LangChain to process documents
             const chunks = await parseDocument(file);
             
-            // 生成嵌入并存储
+            // Generate embeddings and store
             const embeddings = await Promise.all(
                 chunks.map(chunk => this.genAI.embedContent(chunk.text))
             );
@@ -118,16 +118,16 @@ export class CompanyVectorStore {
 
             console.log('Processing query:', query);
             
-            // 生成查询的向量表示
+            // Generate query embedding
             const [queryEmbedding] = await this.embedder.generate(query);
             
-            // 在向量数据库中搜索相似文档
+            // Search for similar documents in vector database
             const results = await this.collection.query({
                 queryEmbeddings: [queryEmbedding],
                 nResults: k
             });
 
-            return results.documents[0];  // 返回最相似的文档
+            return results.documents[0];  // Return most similar document
         } catch (error) {
             console.error('Error in queryDocuments:', error);
             throw error;
@@ -204,6 +204,6 @@ export class CompanyVectorStore {
     }
 }
 
-// 创建单例实例
+// Create singleton instance
 const companyVectorStore = new CompanyVectorStore();
 export default companyVectorStore;
